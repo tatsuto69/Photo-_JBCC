@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>写真投稿アルバム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+        "Segoe UI", sans-serif;
+      color: #222;
+      background: #f5f5f7;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f7;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      margin: 0 0 4px;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #666;
+      margin: 0;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .form-grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+      color: #444;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #d0d0d5;
+      font-size: 0.9rem;
+      background: #fafafa;
+    }
+
+    input[type="file"] {
+      padding: 8px 4px;
+      background: transparent;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #007aff;
+      color: #fff;
+      width: 100%;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+    }
+
+    .button-row {
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .section-title span {
+      font-size: 0.75rem;
+      color: #666;
+      font-weight: 400;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .photo-card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .photo-thumb-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* 4:3 */
+      overflow: hidden;
+      background: #eee;
+    }
+
+    .photo-thumb-wrapper img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: none;
+    }
+
+    .photo-meta {
+      padding: 8px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-main {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .meta-sub {
+      font-size: 0.78rem;
+      color: #666;
+    }
+
+    .meta-tags {
+      font-size: 0.75rem;
+      color: #444;
+    }
+
+    .meta-tags span {
+      background: #f0f0f5;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-right: 4px;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+
+    .meta-comment {
+      font-size: 0.8rem;
+      color: #333;
+      margin-top: 2px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .meta-time {
+      font-size: 0.72rem;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      font-size: 0.85rem;
+      color: #666;
+      text-align: center;
+      padding: 24px 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e5f0ff;
+      color: #1554c0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>写真投稿アルバム</h1>
+      <p>スマホで写真＋コメントを投稿して、みんなのアルバムをつくる簡易アプリ</p>
+    </header>
+
+    <!-- 投稿フォーム -->
+    <section class="card">
+      <form id="postForm">
+        <div class="form-grid">
+          <div>
+            <label for="photo">写真（必須）</label>
+            <!-- capture 属性をつけるとスマホのカメラ起動を促せる端末もあります -->
+            <input
+              id="photo"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              required
+            />
+            <div class="hint">スマホのカメラ／アルバムから1枚選択</div>
+          </div>
+
+          <div class="form-grid form-grid-2">
+            <div>
+              <label for="name">氏名</label>
+              <input id="name" type="text" placeholder="例）山田 太郎" />
+            </div>
+            <div>
+              <label for="department">部門</label>
+              <input id="department" type="text" placeholder="例）営業部" />
+            </div>
+          </div>
+
+          <div>
+            <label for="keywords">キーワード</label>
+            <input
+              id="keywords"
+              type="text"
+              placeholder="例）懇親会, チームA, 表彰"
+            />
+            <div class="hint">
+              カンマ区切りで複数OK（検索用タグのイメージ）
+            </div>
+          </div>
+
+          <div>
+            <label for="comment">フリーコメント</label>
+            <textarea
+              id="comment"
+              placeholder="写真についてひと言コメントを書いてください。"
+            ></textarea>
+          </div>
+
+          <div class="button-row">
+            <button type="submit">
+              📸 写真を投稿する
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- アルバム一覧 -->
+    <section class="card">
+      <div class="section-title">
+        <span>📚 アルバム一覧</span>
+        <span id="postCount" class="badge">0件</span>
+      </div>
+      <div id="gallery" class="gallery">
+        <div class="empty-state">
+          まだ投稿がありません。上のフォームから写真を投稿すると、ここに一覧表示されます。
+        </div>
+      </div>
+    </section>
+
+    <!-- 使い方（QRコード関連メモ） -->
+    <section class="card">
+      <div class="section-title">
+        <span>ℹ️ 使い方メモ</span>
+      </div>
+      <ul style="font-size: 0.75rem; color: #555; padding-left: 18px; margin: 0;">
+        <li>このHTMLファイルをWEBサーバーにアップロードしてURLを発行します。</li>
+        <li>そのURLからQRコードを作成し、参加者に配布してください。</li>
+        <li>参加者はQRコードからこのページを開き、スマホブラウザ上で写真を投稿できます。</li>
+        <li>※このサンプルはサーバー連携なしの「ブラウザ内完結版」です。<br>
+          共有アルバムにしたい場合は、あとからサーバー側の保存処理（API）を追加してください。
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <script>
+    const form = document.getElementById("postForm");
+    const gallery = document.getElementById("gallery");
+    const postCount = document.getElementById("postCount");
+
+    // メモリ上だけで保持する投稿リスト（必要に応じてサーバー保存に置き換え）
+    const posts = [];
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const fileInput = document.getElementById("photo");
+      const nameInput = document.getElementById("name");
+      const deptInput = document.getElementById("department");
+      const keywordsInput = document.getElementById("keywords");
+      const commentInput = document.getElementById("comment");
+
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("写真を選択してください。");
+        return;
+      }
+
+      // 画像をData URLとして読み込み → ギャラリー表示用
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+
+        const post = {
+          id: Date.now(),
+          image: dataUrl,
+          name: (nameInput.value || "").trim(),
+          department: (deptInput.value || "").trim(),
+          keywords: (keywordsInput.value || "").trim(),
+          comment: (commentInput.value || "").trim(),
+          createdAt: new Date().toLocaleString(),
+        };
+
+        // 新しい投稿を先頭に追加
+        posts.unshift(post);
+        renderGallery();
+
+        // フォームリセット
+        form.reset();
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    function renderGallery() {
+      gallery.innerHTML = "";
+
+      if (posts.length === 0) {
+        gallery.innerHTML =
+          '<div class="empty-state">まだ投稿がありません。上のフォームから写真を投稿すると、ここに一覧表示されます。</div>';
+        postCount.textContent = "0件";
+        return;
+      }
+
+      postCount.textContent = posts.length + "件";
+
+      posts.forEach((post) => {
+        const card = document.createElement("article");
+        card.className = "photo-card";
+
+        const imgWrapper = document.createElement("div");
+        imgWrapper.className = "photo-thumb-wrapper";
+
+        const link = document.createElement("a");
+        link.href = post.image;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.title = "タップして拡大表示";
+
+        const img = document.createElement("img");
+        img.src = post.image;
+        img.alt = post.comment || "投稿写真";
+
+        link.appendChild(img);
+        imgWrapper.appendChild(link);
+
+        const meta = document.createElement("div");
+        meta.className = "photo-meta";
+
+        const main = document.createElement("div");
+        main.className = "meta-main";
+        main.textContent =
+          (post.name || "（名無し）") +
+          (post.department ? "｜" + post.department : "");
+
+        const sub = document.createElement("div");
+        sub.className = "meta-sub";
+        sub.textContent = "投稿者情報";
+
+        const tags = document.createElement("div");
+        tags.className = "meta-tags";
+        if (post.keywords) {
+          const parts = post.keywords
+            .split(/[、,]/)
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0);
+          parts.forEach((tag) => {
+            const span = document.createElement("span");
+            span.textContent = "#" + tag;
+            tags.appendChild(span);
+          });
+        }
+
+        const comment = document.createElement("div");
+        comment.className = "meta-comment";
+        comment.textContent = post.comment || "";
+
+        const time = document.createElement("div");
+        time.className = "meta-time";
+        time.textContent = post.createdAt;
+
+        meta.appendChild(main);
+        meta.appendChild(sub);
+        if (post.keywords) meta.appendChild(tags);
+        if (post.comment) meta.appendChild(comment);
+        meta.appendChild(time);
+
+        card.appendChild(imgWrapper);
+        card.appendChild(meta);
+
+        gallery.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
